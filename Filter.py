@@ -35,29 +35,29 @@ class Filter:
 
             # 筛选不满足时间要求的
             if to_second(row['测评时长']) > self.max_time:
-                self.record.record[0].append(index)
+                self.record.record[0].append(row['序号'])
                 flag = True
-                self.error_rows_record.add(index)
+                self.error_rows_record.add(row['序号'])
             elif to_second(row['测评时长']) < self.min_time:
-                self.record.record[1].append(index)
+                self.record.record[1].append(row['序号'])
                 flag = True
-                self.error_rows_record.add(index)
+                self.error_rows_record.add(row['序号'])
 
             # 筛选强制项不正确的
             for forced_i in self.forced_item:
                 if row[df.columns[forced_i[0]]] != forced_i[1]:
-                    self.record.record[2].append(index)
+                    self.record.record[2].append(row['序号'])
                     flag = True
-                    self.error_rows_record.add(index)
+                    self.error_rows_record.add(row['序号'])
                     # 只要有一个强制项不正确就可以结束判断了
                     break
 
             # 筛选重复项不一样的
             for repeat_i in self.repeat_item:
                 if row[df.columns[repeat_i[0]]] != row[df.columns[repeat_i[1]]]:
-                    self.record.record[3].append(index)
+                    self.record.record[3].append(row['序号'])
                     flag = True
-                    self.error_rows_record.add(index)
+                    self.error_rows_record.add(row['序号'])
                     # 只要有一对重复题不一致就可以结束判断了
                     break
 
@@ -75,9 +75,9 @@ class Filter:
                 choice_percentage.append(choice_statistics[choice] / self.question_count)
             choice_percentage.sort()  # 排序选项出现频率
             if choice_percentage[-1] > self.same_percent:
-                self.record.record[4].append(index)
+                self.record.record[4].append(row['序号'])
                 flag = True
-                self.error_rows_record.add(index)
+                self.error_rows_record.add(row['序号'])
 
             if flag:
                 df = df.drop(index)
@@ -119,7 +119,7 @@ class Filter:
 
 
 if __name__ == '__main__':
-    filter = Filter(FileReader.read_source("Source/附件1(1).xlsx"), 23)
+    filter = Filter(FileReader.read_source("Source/测试问卷1.xlsx"), 23)
     print(filter.forced_item)
     print(filter.repeat_item)
     print(filter.source_rows)

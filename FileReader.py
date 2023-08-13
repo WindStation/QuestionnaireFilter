@@ -3,11 +3,12 @@ from pandas import DataFrame
 
 
 def read_source(filename):
-    # filename = "Source/附件1(1).xlsx"
+    # filename = "Source/测试问卷1.xlsx"
     data = pd.read_excel(filename)
     print(data)
     print(data.describe())
     return data
+
 
 # Deprecated
 def write_source(filename, data):
@@ -16,5 +17,5 @@ def write_source(filename, data):
 
 
 if __name__ == '__main__':
-    data = read_source("Source/附件1(1).xlsx")
+    data = read_source("Source/测试问卷1.xlsx")
     write_source("结果.xlsx", data)
