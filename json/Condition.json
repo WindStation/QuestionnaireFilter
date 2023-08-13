@@ -1,0 +1,17 @@
+{
+  "MaxTime": 600,
+  "MinTime": 20,
+  "ForcedItem": [
+    [
+      8,
+      5
+    ]
+  ],
+  "RepeatItem": [
+    [
+      16,
+      21
+    ]
+  ],
+  "SamePercent": 0.6
+}
