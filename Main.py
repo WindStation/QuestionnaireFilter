@@ -12,6 +12,6 @@ if __name__ == '__main__':
             continue
         print(f)
         data = FileReader.read_source(path + f)
-        filter = Filter(data, 23, f)
+        filter = Filter(data, f[:-5])
         filter.process()
         filter.save_record()

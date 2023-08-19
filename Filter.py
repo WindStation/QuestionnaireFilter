@@ -7,21 +7,26 @@ from DeleteRecord import DeleteRecord
 
 
 class Filter:
-    def __init__(self, data: DataFrame, question_count: int, name="问卷"):
+    def __init__(self, data: DataFrame, name="问卷"):
         self.filename = name
         self.source_data = data
         self.result_data = None
 
-        self.question_count = question_count  # 问题数量
+        # self.question_count = question_count  # 问题数量
         self.source_rows = data.shape[0]  # 原始行数
         self.result_rows = 0
         self.condition = json.loads(open("json/Condition.json", 'r').read())
+        self.basic_info = json.loads(open("json/Basic.json", 'r', encoding="utf-8").read())
 
         self.max_time = self.condition['MaxTime']  # 最长时间
         self.min_time = self.condition['MinTime']  # 最短时间
         self.forced_item = self.condition['ForcedItem']  # 强制项
         self.repeat_item = self.condition['RepeatItem']  # 重复项
         self.same_percent = self.condition['SamePercent']  # 重复相同选项率
+
+        self.idx_col_name = self.basic_info['IndexColName']  # “序号”的实际列名
+        self.time_col_name = self.basic_info['TimeColName']  # “测评时间”的实际列名
+        self.target_idx = self.basic_info['TargetColIdx']  # “需要筛选问题”的列号
 
         self.record = DeleteRecord()
         self.error_rows_record = set()
@@ -34,50 +39,54 @@ class Filter:
             flag = False  # True表示需要删除，False表示保留
 
             # 筛选不满足时间要求的
-            if to_second(row['测评时长']) > self.max_time:
-                self.record.record[0].append(row['序号'])
+            if to_second(row[self.time_col_name]) > self.max_time:
+                self.record.record[0].append(row[self.idx_col_name])
                 flag = True
-                self.error_rows_record.add(row['序号'])
-            elif to_second(row['测评时长']) < self.min_time:
-                self.record.record[1].append(row['序号'])
+                self.error_rows_record.add(row[self.idx_col_name])
+            elif to_second(row[self.time_col_name]) < self.min_time:
+                self.record.record[1].append(row[self.idx_col_name])
                 flag = True
-                self.error_rows_record.add(row['序号'])
+                self.error_rows_record.add(row[self.idx_col_name])
 
             # 筛选强制项不正确的
             for forced_i in self.forced_item:
                 if row[df.columns[forced_i[0]]] != forced_i[1]:
-                    self.record.record[2].append(row['序号'])
+                    self.record.record[2].append(row[self.idx_col_name])
                     flag = True
-                    self.error_rows_record.add(row['序号'])
+                    self.error_rows_record.add(row[self.idx_col_name])
                     # 只要有一个强制项不正确就可以结束判断了
                     break
 
             # 筛选重复项不一样的
             for repeat_i in self.repeat_item:
                 if row[df.columns[repeat_i[0]]] != row[df.columns[repeat_i[1]]]:
-                    self.record.record[3].append(row['序号'])
+                    self.record.record[3].append(row[self.idx_col_name])
                     flag = True
-                    self.error_rows_record.add(row['序号'])
+                    self.error_rows_record.add(row[self.idx_col_name])
                     # 只要有一对重复题不一致就可以结束判断了
                     break
 
             # 筛选重复率过高的
-            choice_statistics = {}
-            for i in range(1, self.question_count + 1):  # 先把每个问题选择的选项统计出来
-                choice = int(row[df.columns[i]])
-                if choice in choice_statistics:
-                    choice_statistics[choice] = choice_statistics[choice] + 1
-                else:
-                    choice_statistics[choice] = 1
+            choice_statistics = {}  # 先把每个问题选择的选项统计出来
+            question_count = 0  # 记录问题数量
+            # for i in range(1, self.question_count + 1):
+            for sub_list in self.target_idx:
+                question_count += len(sub_list)
+                for i in sub_list:
+                    choice = int(row[df.columns[i]])
+                    if choice in choice_statistics:
+                        choice_statistics[choice] = choice_statistics[choice] + 1
+                    else:
+                        choice_statistics[choice] = 1
 
             choice_percentage = []
             for choice in choice_statistics:  # 然后要统计出每个选项选择的频率
-                choice_percentage.append(choice_statistics[choice] / self.question_count)
+                choice_percentage.append(choice_statistics[choice] / question_count)
             choice_percentage.sort()  # 排序选项出现频率
             if choice_percentage[-1] > self.same_percent:
-                self.record.record[4].append(row['序号'])
+                self.record.record[4].append(row[self.idx_col_name])
                 flag = True
-                self.error_rows_record.add(row['序号'])
+                self.error_rows_record.add(row[self.idx_col_name])
 
             if flag:
                 df = df.drop(index)
@@ -92,8 +101,8 @@ class Filter:
         #                                 ','.join(list(map(str, self.error_rows_record)))}
         #                      }
         error_description = [
-            ["原始数据行数", str(self.source_rows)+'行'],
-            ["有效数据行数", str(self.result_rows)+'行'],
+            ["原始数据行数", str(self.source_rows) + '行'],
+            ["有效数据行数", str(self.result_rows) + '行'],
             ["无效数据行数", str(len(self.error_rows_record)) + '行', ','.join(list(map(str, self.error_rows_record)))]
 
         ]
@@ -119,7 +128,7 @@ class Filter:
 
 
 if __name__ == '__main__':
-    filter = Filter(FileReader.read_source("Source/测试问卷1.xlsx"), 23)
+    filter = Filter(FileReader.read_source("Source/测试问卷1.xlsx"))
     print(filter.forced_item)
     print(filter.repeat_item)
     print(filter.source_rows)
