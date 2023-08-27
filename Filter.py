@@ -68,16 +68,13 @@ class Filter:
 
             # 筛选重复率过高的
             choice_statistics = {}  # 先把每个问题选择的选项统计出来
-            question_count = 0  # 记录问题数量
-            # for i in range(1, self.question_count + 1):
-            for sub_list in self.target_idx:
-                question_count += len(sub_list)
-                for i in sub_list:
-                    choice = int(row[df.columns[i]])
-                    if choice in choice_statistics:
-                        choice_statistics[choice] = choice_statistics[choice] + 1
-                    else:
-                        choice_statistics[choice] = 1
+            question_count = len(self.target_idx)  # 记录问题数量
+            for i in self.target_idx:
+                choice = int(row[df.columns[i]])
+                if choice in choice_statistics:
+                    choice_statistics[choice] = choice_statistics[choice] + 1
+                else:
+                    choice_statistics[choice] = 1
 
             choice_percentage = []
             for choice in choice_statistics:  # 然后要统计出每个选项选择的频率
