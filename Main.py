@@ -1,9 +1,10 @@
 import os
 
-import FileReader
-from Filter import Filter
+from util import FileReader
+from processing.Filter import Filter
 
-if __name__ == '__main__':
+
+def start_processing():
     path = "Source/"
     files = os.listdir(path)
     # 用了遍历的写法，事实上只能处理“一种格式”的问卷
@@ -15,3 +16,7 @@ if __name__ == '__main__':
         filter = Filter(data, f[:-5])
         filter.process()
         filter.save_record()
+
+
+if __name__ == '__main__':
+    start_processing()

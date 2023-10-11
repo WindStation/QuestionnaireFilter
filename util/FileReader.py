@@ -12,7 +12,7 @@ def read_source(filename):
 
 # Deprecated
 def write_source(filename, data):
-    filepath = "Result/"
+    filepath = "../Result/"
     data.to_excel(filepath + filename, index=False)
 
 

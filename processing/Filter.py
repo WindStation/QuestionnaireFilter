@@ -1,9 +1,9 @@
 import pandas as pd
 from pandas import DataFrame
 import json
-import FileReader
-from TimeUtil import to_second
-from DeleteRecord import DeleteRecord
+from util import FileReader
+from util.TimeUtil import to_second
+from util.DeleteRecord import DeleteRecord
 
 
 class Filter:
@@ -15,8 +15,8 @@ class Filter:
         # self.question_count = question_count  # 问题数量
         self.source_rows = data.shape[0]  # 原始行数
         self.result_rows = 0
-        self.condition = json.loads(open("json/Condition.json", 'r').read())
-        self.basic_info = json.loads(open("json/Basic.json", 'r', encoding="utf-8").read())
+        self.condition = json.loads(open("../json/Condition.json", 'r').read())
+        self.basic_info = json.loads(open("../json/Basic.json", 'r', encoding="utf-8").read())
 
         self.max_time = self.condition['MaxTime']  # 最长时间
         self.min_time = self.condition['MinTime']  # 最短时间
