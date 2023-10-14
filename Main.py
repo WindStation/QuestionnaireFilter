@@ -14,6 +14,7 @@ def start_processing():
         print(f)
         data = FileReader.read_source(path + f)
         filter = Filter(data, f[:-5])
+        filter.get_questionnaire_info()
         filter.process()
         filter.save_record()
 

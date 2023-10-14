@@ -1,13 +1,18 @@
 import pandas as pd
 from pandas import DataFrame
 import json
+
+from database import DatabaseUtil
+from model.AnswerRec import AnswerRec
+from model.FilterRec import FilterRec
+from model.Questionnaire import Questionnaire
 from util import FileReader
 from util.TimeUtil import to_second
 from util.DeleteRecord import DeleteRecord
 
 
 class Filter:
-    def __init__(self, data: DataFrame, name="问卷"):
+    def __init__(self, data: DataFrame, name="问卷", test=False):
         self.filename = name
         self.source_data = data
         self.result_data = None
@@ -15,8 +20,8 @@ class Filter:
         # self.question_count = question_count  # 问题数量
         self.source_rows = data.shape[0]  # 原始行数
         self.result_rows = 0
-        self.condition = json.loads(open("../json/Condition.json", 'r').read())
-        self.basic_info = json.loads(open("../json/Basic.json", 'r', encoding="utf-8").read())
+        self.condition = json.loads(open("json/Condition.json", 'r').read())
+        self.basic_info = json.loads(open("json/Basic.json", 'r', encoding="utf-8").read())
 
         self.max_time = self.condition['MaxTime']  # 最长时间
         self.min_time = self.condition['MinTime']  # 最短时间
@@ -30,6 +35,18 @@ class Filter:
 
         self.record = DeleteRecord()
         self.error_rows_record = set()
+
+        # 数据库操作对象
+        self.questionnaire_obj = None
+        self.answer_recs = list()
+        self.filter_rec_obj = None
+
+        self.test = test  # 如果test==False则结果存数据库；否则存为文件到Result
+
+    # 开始处理前，先把问卷读取出来
+    def get_questionnaire_info(self):
+        # 把问题填进去，回答列表声明好，剩下内容待填
+        self.questionnaire_obj = Questionnaire(self.source_data.columns.tolist(), [], None)
 
     def process(self):
         df = self.source_data
@@ -92,26 +109,34 @@ class Filter:
         self.result_rows = df.shape[0]
 
     def save_record(self):
-        # error_description = {"原始数据行数": self.source_rows,
-        #                      "有效数据行数": self.result_rows,
-        #                      "无效数据行数": {str(len(self.error_rows_record)) + '行',
-        #                                 ','.join(list(map(str, self.error_rows_record)))}
-        #                      }
+        # 将筛选后剩下的回答填入self.questionnaire_obj.answer_rec中
+        for index, row in self.result_data.iterrows():
+            # 先构建这一条回答的结构
+            this_answer = AnswerRec(row[self.idx_col_name], [str(ans) for ans in row.tolist()])
+            # 然后插入到问卷的回答列表中
+            self.questionnaire_obj.answer_recs.append(this_answer.__dict__)  # 由于要存数据库，所以需要使用__dict__魔法方法
+
         error_description = [
             ["原始数据行数", str(self.source_rows) + '行'],
             ["有效数据行数", str(self.result_rows) + '行'],
             ["无效数据行数", str(len(self.error_rows_record)) + '行', ','.join(list(map(str, self.error_rows_record)))]
-
         ]
+
         df_1 = pd.DataFrame(data=error_description)
-        error_type_statistics = []
+        error_type_statistics = []  # 这个是用于输出筛选报告Excel文件的
+        error_dic = {}  # 这个是用于存数据库filterRec的
         for i in range(len(self.record.error_type)):
             # error_type_statistics[0].append(str(self.record.error_type[i]) + '行数')
             # error_type_statistics[1].append([str(len(self.record.record[i])) + '行',
             #                                  ','.join(map(str, self.record.record[i]))])
             error_type_statistics.append([str(self.record.error_type[i]) + '行数', str(len(self.record.record[i])) + '行',
                                           ','.join(map(str, self.record.record[i]))])
+            error_dic[str(self.record.error_type[i])] = self.record.record[i]
         df_2 = pd.DataFrame(data=error_type_statistics)
+
+        self.filter_rec_obj = FilterRec(self.source_rows, len(self.error_rows_record), error_dic)
+        # 最后将这个嵌入questionnaire_obj中，同样需要__dict__魔法方法使其能被数据库解析
+        self.questionnaire_obj.filter_rec = self.filter_rec_obj.__dict__
 
         # 写统计数据文件
         with pd.ExcelWriter("Result/" + self.filename + " 数据筛选报告.xlsx") as writer:
@@ -122,6 +147,16 @@ class Filter:
         self.source_data.to_excel("Result/" + self.filename + " 原始数据.xlsx", index=False)
         # 写新数据文件
         self.result_data.to_excel("Result/" + self.filename + " 筛选数据.xlsx", index=False)
+
+        # 将结果存数据库
+        print(self.questionnaire_obj.__dict__)
+
+        # TEST
+        if self.test:
+            with open(f'./Result/{self.filename} 筛选报告.json', 'w', encoding='utf-8') as output_file:
+                json.dump(self.questionnaire_obj.__dict__, output_file, ensure_ascii=False)
+        else:
+            DatabaseUtil.insert(self.questionnaire_obj.__dict__)
 
 
 if __name__ == '__main__':
