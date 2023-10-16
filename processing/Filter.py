@@ -108,6 +108,7 @@ class Filter:
         self.result_data = df
         self.result_rows = df.shape[0]
 
+    # 会在存数据库的同时返回信息
     def save_record(self):
         # 将筛选后剩下的回答填入self.questionnaire_obj.answer_rec中
         for index, row in self.result_data.iterrows():
@@ -157,6 +158,8 @@ class Filter:
                 json.dump(self.questionnaire_obj.__dict__, output_file, ensure_ascii=False)
         else:
             DatabaseUtil.insert(self.questionnaire_obj.__dict__)
+
+        return self.questionnaire_obj.__dict__
 
 
 if __name__ == '__main__':
