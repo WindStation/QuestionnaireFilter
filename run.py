@@ -1,3 +1,4 @@
+import json
 import os
 
 import flask
@@ -7,7 +8,7 @@ from processing.Filter import Filter
 from util import FileReader
 
 app = Flask(__name__)
-
+app.json.ensure_ascii = False
 
 @app.route('/process', methods=['GET'])
 def process():
