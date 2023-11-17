@@ -1,6 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
 import json
+from bson import ObjectId
 
 from database import DatabaseUtil
 from model.AnswerRec import AnswerRec
@@ -46,7 +47,8 @@ class Filter:
     # 开始处理前，先把问卷读取出来
     def get_questionnaire_info(self):
         # 把问题填进去，回答列表声明好，剩下内容待填
-        self.questionnaire_obj = Questionnaire(self.source_data.columns.tolist(), [], None)
+        self.questionnaire_obj = Questionnaire(self.source_data.columns.tolist(), [], None, str(ObjectId()),
+                                               self.filename)
 
     def process(self):
         df = self.source_data
@@ -157,6 +159,12 @@ class Filter:
             with open(f'./Result/{self.filename} 筛选报告.json', 'w', encoding='utf-8') as output_file:
                 json.dump(self.questionnaire_obj.__dict__, output_file, ensure_ascii=False)
         else:
+            # 由于MongoDB自动添加的ID不能被JSON序列化，因此需要做一步转换，并阻止db自动生成_id
+            # obj_dict = {**self.questionnaire_obj.__dict__, '_id': self.questionnaire_obj._id}
+            # obj_dict.pop('object_id', None)
+            # json_obj = json.dumps(obj_dict, default=DatabaseUtil.default)
+            # obj_dict = json.loads(json_obj)
+            print(self.questionnaire_obj.__dict__)
             DatabaseUtil.insert(self.questionnaire_obj.__dict__)
 
         return self.questionnaire_obj.__dict__

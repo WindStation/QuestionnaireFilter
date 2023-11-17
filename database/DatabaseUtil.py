@@ -1,4 +1,5 @@
 import pymongo
+from bson import ObjectId
 from pymongo import MongoClient
 from model import Questionnaire, AnswerRec, FilterRec
 
@@ -23,6 +24,12 @@ def insert(document):
 
     db.close()
     return result
+
+
+def default(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    raise TypeError("Object of type {} is not JSON serializable".format(type(obj)))
 
 
 if __name__ == '__main__':

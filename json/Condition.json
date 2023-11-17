@@ -1,11 +1,11 @@
 {
-  "MaxTime": 600,
-  "MinTime": 20,
+  "MaxTime": 3000,
+  "MinTime": 350,
   "ForcedItem": [
-    [8, 5]
+    [35, 1], [55, 5]
   ],
   "RepeatItem": [
-    [16, 21]
+    [57, 58]
   ],
   "SamePercent": 0.6
 }

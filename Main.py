@@ -13,7 +13,7 @@ def start_processing():
             continue
         print(f)
         data = FileReader.read_source(path + f)
-        filter = Filter(data, f[:-5])
+        filter = Filter(data, f[:-5], test=True)
         filter.get_questionnaire_info()
         filter.process()
         filter.save_record()

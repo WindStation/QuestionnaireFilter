@@ -10,6 +10,7 @@ from util import FileReader
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
+
 @app.route('/process', methods=['GET'])
 def process():
     path = "Source/"
@@ -22,15 +23,17 @@ def process():
 
     try:
         data = FileReader.read_source(path + f)
-        filter = Filter(data, f[:-5], test=True)
+        filter = Filter(data, f[:-5], test=False)
         filter.get_questionnaire_info()
         filter.process()
         report = filter.save_record()
 
         return jsonify({'success': True, 'content': report})
     except Exception as e:
+        print(e)
         return jsonify(
-            {'success': False, 'error': 'Process failed. Please check basic information and condition settings.'})
+            {'success': False, 'error': 'Process failed. Please check basic information and condition settings.',
+             'exception': e})
 
 
 if __name__ == '__main__':
