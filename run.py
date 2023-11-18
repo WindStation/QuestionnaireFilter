@@ -3,12 +3,15 @@ import os
 
 import flask
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from processing.Filter import Filter
 from util import FileReader
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
+# 开启跨域访问
+CORS(app, supports_credentials=True)
 
 
 @app.route('/process', methods=['GET'])
@@ -23,7 +26,7 @@ def process():
 
     try:
         data = FileReader.read_source(path + f)
-        filter = Filter(data, f[:-5], test=False)
+        filter = Filter(data, f[:-5], test=True)
         filter.get_questionnaire_info()
         filter.process()
         report = filter.save_record()
