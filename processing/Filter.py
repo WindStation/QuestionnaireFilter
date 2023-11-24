@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from pandas import DataFrame
 import json
@@ -10,6 +12,7 @@ from model.Questionnaire import Questionnaire
 from util import FileReader
 from util.TimeUtil import to_second
 from util.DeleteRecord import DeleteRecord
+from util.JsonIO import read_json, write_json
 
 
 class Filter:
@@ -21,18 +24,18 @@ class Filter:
         # self.question_count = question_count  # 问题数量
         self.source_rows = data.shape[0]  # 原始行数
         self.result_rows = 0
-        self.condition = json.loads(open("json/Condition.json", 'r').read())
-        self.basic_info = json.loads(open("json/Basic.json", 'r', encoding="utf-8").read())
+        self.condition = None
+        self.basic_info = None
 
-        self.max_time = self.condition['MaxTime']  # 最长时间
-        self.min_time = self.condition['MinTime']  # 最短时间
-        self.forced_item = self.condition['ForcedItem']  # 强制项
-        self.repeat_item = self.condition['RepeatItem']  # 重复项
-        self.same_percent = self.condition['SamePercent']  # 重复相同选项率
+        self.max_time = None  # 最长时间
+        self.min_time = None  # 最短时间
+        self.forced_item = None  # 强制项
+        self.repeat_item = None  # 重复项
+        self.same_percent = None  # 重复相同选项率
 
-        self.idx_col_name = self.basic_info['IndexColName']  # “序号”的实际列名
-        self.time_col_name = self.basic_info['TimeColName']  # “测评时间”的实际列名
-        self.target_idx = self.basic_info['TargetColIdx']  # “需要筛选问题”的列号
+        self.idx_col_name = None  # “序号”的实际列名
+        self.time_col_name = None  # “测评时间”的实际列名
+        self.target_idx = None  # “需要筛选问题”的列号
 
         self.record = DeleteRecord()
         self.error_rows_record = set()
@@ -44,11 +47,30 @@ class Filter:
 
         self.test = test  # 如果test==False则结果存数据库；否则存为文件到Result
 
+    # 读取并存储“基础信息” Basic.json
+    def build_basic_info(self):
+        # self.basic_info = json.loads(open("json/Basic.json", 'r', encoding="utf-8").read())
+        self.basic_info = read_json("json/Basic.json")
+        self.idx_col_name = self.basic_info['IndexColName']  # “序号”的实际列名
+        self.time_col_name = self.basic_info['TimeColName']  # “测评时间”的实际列名
+        self.target_idx = self.basic_info['TargetColIdx']  # “需要筛选问题”的列号
+
+    # 读取并存储“筛选条件参数” Condition.json
+    def build_condition(self):
+        # self.condition = json.loads(open("json/Condition.json", 'r').read())
+        self.condition = read_json("json/Condition.json")
+        self.max_time = self.condition['MaxTime']  # 最长时间
+        self.min_time = self.condition['MinTime']  # 最短时间
+        self.forced_item = self.condition['ForcedItem']  # 强制项
+        self.repeat_item = self.condition['RepeatItem']  # 重复项
+        self.same_percent = self.condition['SamePercent']  # 重复相同选项率
+
     # 开始处理前，先把问卷读取出来
     def get_questionnaire_info(self):
         # 把问题填进去，回答列表声明好，剩下内容待填
         self.questionnaire_obj = Questionnaire(self.source_data.columns.tolist(), [], None, str(ObjectId()),
                                                self.filename)
+        return self.questionnaire_obj.questions
 
     def process(self):
         df = self.source_data
@@ -69,7 +91,7 @@ class Filter:
 
             # 筛选强制项不正确的
             for forced_i in self.forced_item:
-                if row[df.columns[forced_i[0]]] != forced_i[1]:
+                if str(row[df.columns[forced_i[0]]]) != str(forced_i[1]):
                     self.record.record[2].append(row[self.idx_col_name])
                     flag = True
                     self.error_rows_record.add(row[self.idx_col_name])
@@ -89,7 +111,7 @@ class Filter:
             choice_statistics = {}  # 先把每个问题选择的选项统计出来
             question_count = len(self.target_idx)  # 记录问题数量
             for i in self.target_idx:
-                choice = int(row[df.columns[i]])
+                choice = row[df.columns[i]]
                 if choice in choice_statistics:
                     choice_statistics[choice] = choice_statistics[choice] + 1
                 else:
@@ -142,21 +164,23 @@ class Filter:
         self.questionnaire_obj.filter_rec = self.filter_rec_obj.__dict__
 
         # 写统计数据文件
-        with pd.ExcelWriter("Result/" + self.filename + " 数据筛选报告.xlsx") as writer:
+        if not os.path.exists(f"Result/{self.filename}/"):
+            os.mkdir(f"Result/{self.filename}/")
+        with pd.ExcelWriter("Result/" + self.filename + "/" + self.filename + " 数据筛选报告.xlsx") as writer:
             df_1.to_excel(writer, index=False, header=False)
             df_2.to_excel(writer, startrow=4, index=False, header=False)
 
         # 写原数据文件
-        self.source_data.to_excel("Result/" + self.filename + " 原始数据.xlsx", index=False)
+        self.source_data.to_excel("Result/" + self.filename + "/" + self.filename + " 原始数据.xlsx", index=False)
         # 写新数据文件
-        self.result_data.to_excel("Result/" + self.filename + " 筛选数据.xlsx", index=False)
+        self.result_data.to_excel("Result/" + self.filename + "/" + self.filename + " 筛选数据.xlsx", index=False)
 
         # 将结果存数据库
         print(self.questionnaire_obj.__dict__)
 
         # TEST
         if self.test:
-            with open(f'./Result/{self.filename} 筛选报告.json', 'w', encoding='utf-8') as output_file:
+            with open(f'./Result/{self.filename}/{self.filename} 筛选报告.json', 'w', encoding='utf-8') as output_file:
                 json.dump(self.questionnaire_obj.__dict__, output_file, ensure_ascii=False)
         else:
             # 由于MongoDB自动添加的ID不能被JSON序列化，因此需要做一步转换，并阻止db自动生成_id

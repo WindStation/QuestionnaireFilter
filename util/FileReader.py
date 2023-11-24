@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from pandas import DataFrame
 
@@ -19,3 +21,4 @@ def write_source(filename, data):
 if __name__ == '__main__':
     data = read_source("Source/测试问卷1.xlsx")
     write_source("结果.xlsx", data)
+    os.startfile("..\\Source\\234274756_2_家庭教养方式测试（父母版）_245_245.xlsx")
