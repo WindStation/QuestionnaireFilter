@@ -85,7 +85,13 @@ def start_window(username="User", test=False):
         elif filename[-5:] != ".xlsx":
             messagebox.showinfo("Error", "请选择正确格式的文件。")
             return
-        filter = Filter(read_source(filename), filename.split("/")[-1][:-5], test=True)
+        try:
+            filter = Filter(read_source(filename), filename.split("/")[-1][:-5], test=True)
+        except Exception as e:
+            print(e)
+            messagebox.showerror("Error", "请检查你选择的文件是否符合格式。")
+            return
+
         if test:
             filter.build_basic_info()
             filter.build_condition()

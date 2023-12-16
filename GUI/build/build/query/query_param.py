@@ -8,7 +8,7 @@ class ParamForced(tk.Toplevel):
         self.result = None
         self.questions = questions
         self.title("填写强制题信息")
-        self.geometry("800x300")
+        self.geometry("800x500")
         self.start_window()
 
     def start_window(self):
@@ -51,7 +51,7 @@ class ParamForced(tk.Toplevel):
         entry.pack(side=tk.LEFT, padx=3)
 
         # 添加说明文字
-        hint = tk.Text(right_upper, height=10)
+        hint = tk.Text(right_upper, height=14)
         hint.config(font=font.Font(family="Microsoft Yahei", size=12))
         hint.insert(tk.END, "提示：\n在这个页面中，请填写所有的强制题信息。若一份作答记录中，有强制题没有选择要求的选项，则该份问卷会被视为无效。\n\n"
                             "要输入一项强制题信息，你需要在左下角先选择一道题目，并在右边的输入框中输入该题的答案，然后点击右下方的“添加”按钮。\n"
@@ -71,7 +71,7 @@ class ParamForced(tk.Toplevel):
             if selected_item:
                 table.delete(selected_item)
 
-        add_btn = tk.Button(right_down, text="添加", width=10, height=2, command=add_row)
+        add_btn = tk.Button(right_down, text="添加", width=10, height=2, command=add_row, fg="#FF0000")
         del_btn = tk.Button(right_down, text="删除", width=10, height=2, command=del_row)
         ok_btn = tk.Button(right_down, text="确认", width=10, height=2, command=lambda: self.ok(table))
 
@@ -94,7 +94,7 @@ class ParamRepeat(tk.Toplevel):
         self.result = None
         self.questions = questions
         self.title("填写重复题信息")
-        self.geometry("800x300")
+        self.geometry("800x500")
         self.start_window()
 
     def start_window(self):
@@ -118,8 +118,8 @@ class ParamRepeat(tk.Toplevel):
 
         # 创建控件
         table = ttk.Treeview(left_upper, columns=("Column 1", "Column 2"), show="headings", height=5)
-        table.heading("Column 1", text="强制项（列号）")
-        table.heading("Column 2", text="答案")
+        table.heading("Column 1", text="重复项1（列号）")
+        table.heading("Column 2", text="重复项2（列号）")
         table.column("Column 1", width=100, anchor=tk.CENTER)
         table.column("Column 2", width=100, anchor=tk.CENTER)
         table.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH)
@@ -136,7 +136,7 @@ class ParamRepeat(tk.Toplevel):
         combobox_2.pack(side=tk.LEFT, padx=3)
 
         # 说明文字
-        hint = tk.Text(right_upper, height=10)
+        hint = tk.Text(right_upper, height=14)
         hint.config(font=font.Font(family="Microsoft Yahei", size=12))
         hint.insert(tk.END, "提示：\n在这个页面中，请选择所有重复题。如果一份作答记录中出现了“一对重复题选择不同项”的情况，则该份作答将被视为无效。\n\n"
                             "要添加一对重复题，你需要在左下角的两个下拉框中，分别选中这对重复题。\n"
@@ -155,7 +155,7 @@ class ParamRepeat(tk.Toplevel):
             if selected_item:
                 table.delete(selected_item)
 
-        add_btn = tk.Button(right_down, text="添加", width=10, height=2, command=add_row)
+        add_btn = tk.Button(right_down, text="添加", width=10, height=2, command=add_row, fg="#FF0000")
         del_btn = tk.Button(right_down, text="删除", width=10, height=2, command=del_row)
         ok_btn = tk.Button(right_down, text="确认", width=10, height=2, command=lambda: self.ok(table))
 

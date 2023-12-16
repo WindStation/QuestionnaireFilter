@@ -438,7 +438,12 @@ def start_window(filename, filter: Filter):
             window.destroy()
             filter_fail.start_window(filename, filter)
             return
-        filter.save_record()
+        try:
+            filter.save_record()
+        except PermissionError as e:
+            print(e)
+            messagebox.showerror("Error", "文件操作被拒绝，请确保所有相关问卷文件都已关闭。")
+            return
         window.destroy()
         filter_success.start_window(filename, filter)
 

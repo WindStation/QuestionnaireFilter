@@ -164,8 +164,10 @@ class Filter:
         self.questionnaire_obj.filter_rec = self.filter_rec_obj.__dict__
 
         # 写统计数据文件
-        if not os.path.exists(f"Result/{self.filename}/"):
-            os.mkdir(f"Result/{self.filename}/")
+        if not os.path.exists("Result"):
+            os.mkdir("Result")
+        if not os.path.exists(os.path.join("Result", self.filename)):
+            os.mkdir(os.path.join("Result", self.filename))
         with pd.ExcelWriter("Result/" + self.filename + "/" + self.filename + " 数据筛选报告.xlsx") as writer:
             df_1.to_excel(writer, index=False, header=False)
             df_2.to_excel(writer, startrow=4, index=False, header=False)
